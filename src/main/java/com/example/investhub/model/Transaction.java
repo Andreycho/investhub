@@ -75,7 +75,8 @@ public class Transaction {
         return asset != null ? asset.getSymbol() : null;
     }
 
-    public double getPrice() {
-        return pricePerUnit;
+    @JsonProperty("totalPrice")
+    public double getTotalPrice() {
+        return quantity * pricePerUnit;
     }
 }
