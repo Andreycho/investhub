@@ -16,8 +16,8 @@ public class User {
     @Column(nullable = false)
     private String password;
     
-    @Column(nullable = false, precision = 19, scale = 8)
-    private BigDecimal usdBalance = BigDecimal.ZERO;
+    @Column(nullable = false, precision = 19, scale = 8, columnDefinition = "DECIMAL(19,8) DEFAULT 30000")
+    private BigDecimal usdBalance = new BigDecimal("30000.00");
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
