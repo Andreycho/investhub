@@ -1,6 +1,7 @@
 package com.example.investhub.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "users")
@@ -14,6 +15,9 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+    
+    @Column(nullable = false, precision = 19, scale = 8)
+    private BigDecimal usdBalance = BigDecimal.ZERO;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -23,5 +27,7 @@ public class User {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
-}
 
+    public BigDecimal getUsdBalance() { return usdBalance; }
+    public void setUsdBalance(BigDecimal usdBalance) { this.usdBalance = usdBalance; }
+}
