@@ -8,6 +8,6 @@ import java.util.List;
 
 @Repository
 public interface WatchlistRepository extends JpaRepository<WatchlistEntry, Long> {
-    List<WatchlistEntry> findByUserId(Long userId);
+    List<WatchlistEntry> findByUser_Id(Long userId);
 }
 

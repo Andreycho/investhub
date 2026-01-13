@@ -1,7 +1,8 @@
 package com.example.investhub.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "holdings",
@@ -14,17 +15,19 @@ public class Holding {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "asset_id")
+    @JsonIgnore
     private Asset asset;
 
-    @Column(nullable = false, precision = 19, scale = 8)
-    private BigDecimal quantity = BigDecimal.ZERO;
+    @Column(nullable = false)
+    private double quantity = 0.0;
 
-    @Column(nullable = false, precision = 19, scale = 8)
-    private BigDecimal avgBuyPrice = BigDecimal.ZERO;
+    @Column(nullable = false)
+    private double avgBuyPrice = 0.0;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -35,9 +38,14 @@ public class Holding {
     public Asset getAsset() { return asset; }
     public void setAsset(Asset asset) { this.asset = asset; }
 
-    public BigDecimal getQuantity() { return quantity; }
-    public void setQuantity(BigDecimal quantity) { this.quantity = quantity; }
+    @JsonProperty("assetSymbol")
+    public String getAssetSymbol() {
+        return asset != null ? asset.getSymbol() : null;
+    }
 
-    public BigDecimal getAvgBuyPrice() { return avgBuyPrice; }
-    public void setAvgBuyPrice(BigDecimal avgBuyPrice) { this.avgBuyPrice = avgBuyPrice; }
+    public double getQuantity() { return quantity; }
+    public void setQuantity(double quantity) { this.quantity = quantity; }
+
+    public double getAvgBuyPrice() { return avgBuyPrice; }
+    public void setAvgBuyPrice(double avgBuyPrice) { this.avgBuyPrice = avgBuyPrice; }
 }

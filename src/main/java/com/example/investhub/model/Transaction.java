@@ -1,7 +1,8 @@
 package com.example.investhub.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -16,21 +17,23 @@ public class Transaction {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "asset_id")
+    @JsonIgnore
     private Asset asset;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Type type;
 
-    @Column(nullable = false, precision = 19, scale = 8)
-    private BigDecimal quantity;
+    @Column(nullable = false)
+    private double quantity;
 
-    @Column(nullable = false, precision = 19, scale = 8)
-    private BigDecimal pricePerUnit;
+    @Column(nullable = false)
+    private double pricePerUnit;
 
     @Column(nullable = false)
     private Instant timestamp = Instant.now();
@@ -47,12 +50,32 @@ public class Transaction {
     public Type getType() { return type; }
     public void setType(Type type) { this.type = type; }
 
-    public BigDecimal getQuantity() { return quantity; }
-    public void setQuantity(BigDecimal quantity) { this.quantity = quantity; }
+    public double getQuantity() { return quantity; }
+    public void setQuantity(double quantity) { this.quantity = quantity; }
 
-    public BigDecimal getPricePerUnit() { return pricePerUnit; }
-    public void setPricePerUnit(BigDecimal pricePerUnit) { this.pricePerUnit = pricePerUnit; }
+    public double getPricePerUnit() { return pricePerUnit; }
+    public void setPricePerUnit(double pricePerUnit) { this.pricePerUnit = pricePerUnit; }
 
     public Instant getTimestamp() { return timestamp; }
     public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }
+
+    public Long getUserId() {
+        return user != null ? user.getId() : null;
+    }
+
+    public void setUserId(Long userId) {
+        if (this.user == null) {
+            this.user = new User();
+        }
+        this.user.setId(userId);
+    }
+
+    @JsonProperty("assetSymbol")
+    public String getAssetSymbol() {
+        return asset != null ? asset.getSymbol() : null;
+    }
+
+    public double getPrice() {
+        return pricePerUnit;
+    }
 }

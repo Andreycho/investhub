@@ -1,7 +1,6 @@
 package com.example.investhub.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,7 +8,6 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class BinanceSubscribeMessage {
 
     private String method;
@@ -18,6 +16,12 @@ public class BinanceSubscribeMessage {
     private List<String> params;
 
     private int id;
+
+    public BinanceSubscribeMessage(String method, List<String> params, int id) {
+        this.method = method;
+        this.params = params;
+        this.id = id;
+    }
 
     public static BinanceSubscribeMessage createDefaultSubscription() {
         List<String> streams = List.of(

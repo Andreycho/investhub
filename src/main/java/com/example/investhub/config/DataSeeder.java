@@ -22,19 +22,14 @@ public class DataSeeder implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        if (args.getOptionValues("seeder") != null) {
-            List<String> seeder = Arrays.asList(args.getOptionValues("seeder").get(0).split(","));
-            if (seeder.contains("asset")) {
-                seedAssets();
-                log.info("Success run asset seeder");
-            }
-        } else {
-            log.info("Asset seeder skipped");
-        }
+        log.info("Starting database seeding...");
+        seedAssets();
+        log.info("Database seeding completed!");
     }
 
-    /** Command to run seeder:
-     .\mvnw.cmd spring-boot:run -Dspring-boot.run.arguments="--seeder=asset"
+    /**
+     * Seed cryptocurrency assets.
+     * This runs automatically on every startup.
      */
     private void seedAssets() {
         List<AssetData> assetsToSeed = List.of(
@@ -54,13 +49,11 @@ public class DataSeeder implements ApplicationRunner {
                 asset.setName(assetData.name);
                 assetRepository.save(asset);
 
-                log.info("Success seeded asset: {} ({})", assetData.name, assetData.symbol);
-            } else {
-                log.info("Asset already exists: {} ({})", assetData.name, assetData.symbol);
+                log.info("✓ Seeded asset: {} ({})", assetData.name, assetData.symbol);
             }
         }
 
-        log.info("Database seeding completed. Total assets in database: {}", assetRepository.count());
+        log.info("✓ Assets seeded. Total assets in database: {}", assetRepository.count());
     }
 
     private record AssetData(String symbol, String name) {}

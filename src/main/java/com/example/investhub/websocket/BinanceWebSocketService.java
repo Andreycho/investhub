@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.websocket.*;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.example.investhub.model.dto.BinanceSubscribeMessage;
@@ -17,8 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @ClientEndpoint
 @Service
-@Slf4j
 public class BinanceWebSocketService {
+
+    private static final Logger log = LoggerFactory.getLogger(BinanceWebSocketService.class);
 
     @Value("${binance.websocket.url}")
     private String binanceWebSocketUrl;
