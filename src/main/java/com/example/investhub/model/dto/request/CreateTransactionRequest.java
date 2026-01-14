@@ -1,4 +1,4 @@
-package com.example.investhub.model.dto;
+package com.example.investhub.model.dto.request;
 
 import com.example.investhub.model.Transaction;
 

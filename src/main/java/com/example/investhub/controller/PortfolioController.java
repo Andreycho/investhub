@@ -1,6 +1,10 @@
 package com.example.investhub.controller;
 
 import com.example.investhub.model.Holding;
+import com.example.investhub.model.dto.response.BalanceResponse;
+import com.example.investhub.model.dto.response.HoldingResponse;
+import com.example.investhub.model.dto.response.PortfolioResponse;
+import com.example.investhub.model.dto.response.PortfolioStatsResponse;
 import com.example.investhub.service.PortfolioService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -11,9 +15,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Controller for handling portfolio and user account operations.
- */
 @RestController
 @RequestMapping("/api/portfolio")
 public class PortfolioController {
@@ -25,64 +26,73 @@ public class PortfolioController {
     }
 
     /**
-     * Get the authenticated user's complete portfolio.
-     *
-     * @param userDetails The authenticated user details
-     * @return Portfolio details including balance and holdings
+     * Get the authenticated user's complete portfolio (DTO).
+     * Returns balance + holdings list.
      */
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getPortfolio(@AuthenticationPrincipal UserDetails userDetails) {
-        Map<String, Object> portfolio = portfolioService.getUserPortfolio(userDetails.getUsername());
-        return ResponseEntity.ok(portfolio);
+    public ResponseEntity<PortfolioResponse> getPortfolio(@AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails.getUsername();
+
+        BigDecimal balance = portfolioService.getUserBalance(username);
+        List<Holding> holdings = portfolioService.getUserHoldings(username);
+
+        List<HoldingResponse> holdingDtos = holdings.stream()
+                .map(this::toHoldingResponse)
+                .toList();
+
+        return ResponseEntity.ok(new PortfolioResponse(balance, holdingDtos));
     }
 
     /**
-     * Get the authenticated user's USD balance.
-     *
-     * @param userDetails The authenticated user details
-     * @return Current USD balance
+     * Get the authenticated user's USD balance (DTO).
      */
     @GetMapping("/balance")
-    public ResponseEntity<BigDecimal> getBalance(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<BalanceResponse> getBalance(@AuthenticationPrincipal UserDetails userDetails) {
         BigDecimal balance = portfolioService.getUserBalance(userDetails.getUsername());
-        return ResponseEntity.ok(balance);
+        return ResponseEntity.ok(new BalanceResponse(balance));
     }
 
     /**
-     * Get all cryptocurrency holdings for the authenticated user.
-     *
-     * @param userDetails The authenticated user details
-     * @return List of holdings
+     * Get all holdings (DTO).
      */
     @GetMapping("/holdings")
-    public ResponseEntity<List<Holding>> getHoldings(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<HoldingResponse>> getHoldings(@AuthenticationPrincipal UserDetails userDetails) {
         List<Holding> holdings = portfolioService.getUserHoldings(userDetails.getUsername());
-        return ResponseEntity.ok(holdings);
+
+        List<HoldingResponse> response = holdings.stream()
+                .map(this::toHoldingResponse)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * Get a specific holding by asset symbol.
-     *
-     * @param symbol The crypto symbol
-     * @param userDetails The authenticated user details
-     * @return The holding details
+     * Get a specific holding by asset symbol (DTO).
      */
     @GetMapping("/holdings/{symbol}")
-    public ResponseEntity<Holding> getHoldingBySymbol(@PathVariable String symbol, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<HoldingResponse> getHoldingBySymbol(
+            @PathVariable String symbol,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
         Holding holding = portfolioService.getHoldingBySymbol(symbol, userDetails.getUsername());
-        return ResponseEntity.ok(holding);
+        return ResponseEntity.ok(toHoldingResponse(holding));
     }
 
     /**
-     * Get portfolio statistics (total value, profit/loss, etc.).
-     *
-     * @param userDetails The authenticated user details
-     * @return Portfolio statistics
+     * Get portfolio statistics (DTO).
      */
     @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> getPortfolioStats(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<PortfolioStatsResponse> getPortfolioStats(@AuthenticationPrincipal UserDetails userDetails) {
         Map<String, Object> stats = portfolioService.getPortfolioStatistics(userDetails.getUsername());
-        return ResponseEntity.ok(stats);
+        return ResponseEntity.ok(new PortfolioStatsResponse(stats));
+    }
+
+    private HoldingResponse toHoldingResponse(Holding holding) {
+        HoldingResponse dto = new HoldingResponse();
+        dto.setId(holding.getId());
+        dto.setAssetSymbol(holding.getAssetSymbol());
+        dto.setQuantity(holding.getQuantity());
+        dto.setAvgBuyPrice(holding.getAvgBuyPrice());
+        return dto;
     }
 }
-

@@ -9,9 +9,16 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.example.investhub.model.dto.AuthResponse;
+import com.example.investhub.model.dto.LoginRequest;
+import com.example.investhub.model.dto.RegisterRequest;
+import com.example.investhub.model.dto.response.UserResponse;
+
+import java.math.BigDecimal;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -35,18 +42,25 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody User user) {
-        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+    public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already exists");
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        if (user.getUsdBalance() == null) {
+            user.setUsdBalance(new BigDecimal("30000.00"));
+        }
+
         userRepository.save(user);
         return ResponseEntity.ok("User registered successfully");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User loginRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         var userOpt = userRepository.findByUsername(loginRequest.getUsername());
 
         if (userOpt.isEmpty()) {
@@ -55,7 +69,6 @@ public class AuthController {
 
         User user = userOpt.get();
 
-        // Authenticate user
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getUsername(),
@@ -63,19 +76,25 @@ public class AuthController {
                 )
         );
 
-        // Generate JWT token
         String jwtToken = jwtService.generateToken(user);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", jwtToken);
-        response.put("expiresIn", jwtService.getExpirationTime());
-        response.put("username", user.getUsername());
+        AuthResponse response = new AuthResponse(
+                jwtToken,
+                jwtService.getExpirationTime(),
+                user.getId(),
+                user.getUsername(),
+                user.getUsdBalance()
+        );
 
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers() {
-        return ResponseEntity.ok(userRepository.findAll());
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+        List<UserResponse> users = userRepository.findAll().stream()
+                .map(u -> new UserResponse(u.getId(), u.getUsername(), u.getUsdBalance()))
+                .toList();
+
+        return ResponseEntity.ok(users);
     }
 }

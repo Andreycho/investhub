@@ -1,12 +1,13 @@
 package com.example.investhub.controller;
 
 import com.example.investhub.model.Asset;
+import com.example.investhub.model.dto.response.AssetResponse;
+import com.example.investhub.model.dto.response.PriceResponse;
 import com.example.investhub.service.MarketDataService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Controller for handling market data and cryptocurrency prices.
@@ -24,59 +25,81 @@ public class MarketDataController {
     /**
      * Get current prices for all tracked cryptocurrencies.
      *
-     * @return Map of cryptocurrency symbols to their current prices
+     * @return List of PriceResponse (symbol + price)
      */
     @GetMapping("/prices")
-    public ResponseEntity<Map<String, Double>> getCurrentPrices() {
-        Map<String, Double> prices = marketDataService.getCurrentPrices();
-        return ResponseEntity.ok(prices);
+    public ResponseEntity<List<PriceResponse>> getCurrentPrices() {
+        var pricesMap = marketDataService.getCurrentPrices();
+
+        List<PriceResponse> response = pricesMap.entrySet().stream()
+                .map(e -> new PriceResponse(e.getKey(), e.getValue()))
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Get the current price of a specific cryptocurrency.
      *
      * @param symbol The cryptocurrency symbol
-     * @return The current price
+     * @return PriceResponse (symbol + price)
      */
     @GetMapping("/prices/{symbol}")
-    public ResponseEntity<Double> getPriceBySymbol(@PathVariable String symbol) {
+    public ResponseEntity<PriceResponse> getPriceBySymbol(@PathVariable String symbol) {
         Double price = marketDataService.getPriceBySymbol(symbol);
-        return ResponseEntity.ok(price);
+        return ResponseEntity.ok(new PriceResponse(symbol, price));
     }
 
     /**
      * Get all available assets/cryptocurrencies.
      *
-     * @return List of all available assets
+     * @return List of all available assets (DTO)
      */
     @GetMapping("/assets")
-    public ResponseEntity<List<Asset>> getAllAssets() {
+    public ResponseEntity<List<AssetResponse>> getAllAssets() {
         List<Asset> assets = marketDataService.getAllAssets();
-        return ResponseEntity.ok(assets);
+
+        List<AssetResponse> response = assets.stream()
+                .map(this::toAssetResponse)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Get detailed information about a specific asset.
      *
      * @param symbol The asset symbol
-     * @return The asset details
+     * @return The asset details (DTO)
      */
     @GetMapping("/assets/{symbol}")
-    public ResponseEntity<Asset> getAssetBySymbol(@PathVariable String symbol) {
+    public ResponseEntity<AssetResponse> getAssetBySymbol(@PathVariable String symbol) {
         Asset asset = marketDataService.getAssetBySymbol(symbol);
-        return ResponseEntity.ok(asset);
+        return ResponseEntity.ok(toAssetResponse(asset));
     }
 
     /**
      * Search for assets by name or symbol.
      *
      * @param query The search query
-     * @return List of matching assets
+     * @return List of matching assets (DTO)
      */
     @GetMapping("/assets/search")
-    public ResponseEntity<List<Asset>> searchAssets(@RequestParam String query) {
+    public ResponseEntity<List<AssetResponse>> searchAssets(@RequestParam String query) {
         List<Asset> assets = marketDataService.searchAssets(query);
-        return ResponseEntity.ok(assets);
+
+        List<AssetResponse> response = assets.stream()
+                .map(this::toAssetResponse)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    private AssetResponse toAssetResponse(Asset asset) {
+        AssetResponse dto = new AssetResponse();
+        dto.setId(asset.getId());
+        dto.setSymbol(asset.getSymbol());
+        dto.setName(asset.getName());
+        return dto;
     }
 }
-

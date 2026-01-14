@@ -3,6 +3,7 @@ package com.example.investhub.model;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -31,6 +32,7 @@ public class User implements UserDetails {
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
+    @JsonIgnore
     @Override
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }

@@ -1,7 +1,8 @@
 package com.example.investhub.controller;
 
 import com.example.investhub.model.Transaction;
-import com.example.investhub.model.dto.CreateTransactionRequest;
+import com.example.investhub.model.dto.request.CreateTransactionRequest;
+import com.example.investhub.model.dto.response.TransactionResponse;
 import com.example.investhub.service.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Controller for handling transaction-related operations.
- */
 @RestController
 @RequestMapping("/api/transactions")
 public class TransactionController {
@@ -26,40 +24,40 @@ public class TransactionController {
         this.transactionService = transactionService;
     }
 
-    /**
-     * Get all transactions for the authenticated user.
-     *
-     * @param userDetails The authenticated user details
-     * @return List of user's transactions
-     */
+    private TransactionResponse toResponse(Transaction t) {
+        String assetSymbol = (t.getAsset() != null) ? t.getAsset().getSymbol() : null;
+
+        return new TransactionResponse(
+                t.getId(),
+                t.getType() != null ? t.getType().name() : null,
+                assetSymbol,
+                t.getQuantity(),
+                t.getPricePerUnit(),
+                t.getTimestamp()
+        );
+    }
+
     @GetMapping
-    public ResponseEntity<List<Transaction>> getUserTransactions(@AuthenticationPrincipal UserDetails userDetails) {
-        List<Transaction> transactions = transactionService.getUserTransactions(userDetails.getUsername());
+    public ResponseEntity<List<TransactionResponse>> getUserTransactions(@AuthenticationPrincipal UserDetails userDetails) {
+        List<TransactionResponse> transactions = transactionService
+                .getUserTransactions(userDetails.getUsername())
+                .stream()
+                .map(this::toResponse)
+                .toList();
+
         return ResponseEntity.ok(transactions);
     }
 
-    /**
-     * Get a specific transaction by ID for the authenticated user.
-     *
-     * @param transactionId The transaction ID
-     * @param userDetails The authenticated user details
-     * @return The transaction details
-     */
     @GetMapping("/{transactionId}")
-    public ResponseEntity<Transaction> getTransactionById(@PathVariable Long transactionId, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<TransactionResponse> getTransactionById(@PathVariable Long transactionId,
+                                                                  @AuthenticationPrincipal UserDetails userDetails) {
         Transaction transaction = transactionService.getTransactionById(transactionId, userDetails.getUsername());
-        return ResponseEntity.ok(transaction);
+        return ResponseEntity.ok(toResponse(transaction));
     }
 
-    /**
-     * Create a new transaction (buy/sell crypto).
-     *
-     * @param request The transaction request
-     * @param userDetails The authenticated user details
-     * @return The created transaction
-     */
     @PostMapping
-    public ResponseEntity<Transaction> createTransaction(@RequestBody CreateTransactionRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<TransactionResponse> createTransaction(@RequestBody CreateTransactionRequest request,
+                                                                 @AuthenticationPrincipal UserDetails userDetails) {
 
         log.info("=== CREATE TRANSACTION REQUEST ===");
         log.info("User: {}", userDetails != null ? userDetails.getUsername() : "NULL");
@@ -68,32 +66,28 @@ public class TransactionController {
         log.info("Quantity: {}", request.getQuantity());
 
         if (userDetails == null) {
-            log.error("UserDetails is NULL! Authentication failed!");
             return ResponseEntity.status(401).build();
         }
 
-        try {
-            Transaction createdTransaction = transactionService.createTransaction(request.getType(), request.getAssetSymbol(), request.getQuantity(), userDetails.getUsername()
-            );
-            log.info("Transaction created successfully: ID={}", createdTransaction.getId());
-            return ResponseEntity.ok(createdTransaction);
-        } catch (Exception e) {
-            log.error("ERROR creating transaction: {}", e.getMessage(), e);
-            throw e;
-        }
+        Transaction created = transactionService.createTransaction(
+                request.getType(),
+                request.getAssetSymbol(),
+                request.getQuantity(),
+                userDetails.getUsername()
+        );
+
+        return ResponseEntity.ok(toResponse(created));
     }
 
-    /**
-     * Get transaction history filtered by asset symbol.
-     *
-     * @param symbol The crypto symbol
-     * @param userDetails The authenticated user details
-     * @return List of transactions for the specified asset
-     */
     @GetMapping("/asset/{symbol}")
-    public ResponseEntity<List<Transaction>> getTransactionsByAsset(@PathVariable String symbol, @AuthenticationPrincipal UserDetails userDetails) {
-        List<Transaction> transactions = transactionService.getTransactionsByAsset(symbol, userDetails.getUsername());
+    public ResponseEntity<List<TransactionResponse>> getTransactionsByAsset(@PathVariable String symbol,
+                                                                            @AuthenticationPrincipal UserDetails userDetails) {
+        List<TransactionResponse> transactions = transactionService
+                .getTransactionsByAsset(symbol, userDetails.getUsername())
+                .stream()
+                .map(this::toResponse)
+                .toList();
+
         return ResponseEntity.ok(transactions);
     }
 }
-
