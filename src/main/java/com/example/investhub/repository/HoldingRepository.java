@@ -11,5 +11,5 @@ import java.util.Optional;
 public interface HoldingRepository extends JpaRepository<Holding, Long> {
     List<Holding> findByUser_Id(Long userId);
     Optional<Holding> findByUser_IdAndAsset_Symbol(Long userId, String assetSymbol);
+    void deleteByUser_Id(Long userId);
 }
-

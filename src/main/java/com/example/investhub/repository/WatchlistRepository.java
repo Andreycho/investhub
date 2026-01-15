@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface WatchlistRepository extends JpaRepository<WatchlistEntry, Long> {
     List<WatchlistEntry> findByUser_Id(Long userId);
+    void deleteByUser_Id(Long userId);
 }
-
