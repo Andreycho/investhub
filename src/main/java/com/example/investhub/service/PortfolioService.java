@@ -6,6 +6,7 @@ import com.example.investhub.model.Asset;
 import com.example.investhub.model.Holding;
 import com.example.investhub.model.Transaction;
 import com.example.investhub.model.User;
+import com.example.investhub.model.enums.PerformanceStatus;
 import com.example.investhub.repository.HoldingRepository;
 import com.example.investhub.repository.UserRepository;
 import com.example.investhub.websocket.BinanceWebSocketService;
@@ -120,16 +121,26 @@ public class PortfolioService {
             }
         }
 
-        double profitLoss = currentValue - totalInvested;
-        double profitLossPercentage = totalInvested > 0 ? (profitLoss / totalInvested) * 100 : 0;
+        double netGain = currentValue - totalInvested;
+        double returnPercentage = totalInvested > 0 ? (netGain / totalInvested) * 100 : 0;
+
+        PerformanceStatus performanceStatus;
+        if (netGain > 0) {
+            performanceStatus = PerformanceStatus.WINNING;
+        } else if (netGain < 0) {
+            performanceStatus = PerformanceStatus.LOSING;
+        } else {
+            performanceStatus = PerformanceStatus.BREAK_EVEN;
+        }
 
         Map<String, Object> stats = new HashMap<>();
+        stats.put("totalPortfolioValue", currentValue + user.getUsdBalance().doubleValue());
+        stats.put("usdBalance", user.getUsdBalance());
         stats.put("totalInvested", totalInvested);
         stats.put("currentValue", currentValue);
-        stats.put("profitLoss", profitLoss);
-        stats.put("profitLossPercentage", profitLossPercentage);
-        stats.put("usdBalance", user.getUsdBalance());
-        stats.put("totalPortfolioValue", currentValue + user.getUsdBalance().doubleValue());
+        stats.put("netGain", netGain);
+        stats.put("returnPercentage", returnPercentage);
+        stats.put("performanceStatus", performanceStatus);
         stats.put("holdingsCount", holdings.size());
 
         return stats;
