@@ -1,5 +1,6 @@
 package com.example.investhub.controller;
 
+import com.example.investhub.mapper.DtoMapper;
 import com.example.investhub.model.Asset;
 import com.example.investhub.model.WatchlistEntry;
 import com.example.investhub.model.dto.response.WatchlistAssetResponse;
@@ -17,9 +18,11 @@ import java.util.List;
 public class WatchlistController {
 
     private final WatchlistService watchlistService;
+    private final DtoMapper dtoMapper;
 
-    public WatchlistController(WatchlistService watchlistService) {
+    public WatchlistController(WatchlistService watchlistService, DtoMapper dtoMapper) {
         this.watchlistService = watchlistService;
+        this.dtoMapper = dtoMapper;
     }
 
     @GetMapping
@@ -27,7 +30,7 @@ public class WatchlistController {
         List<Asset> watchlist = watchlistService.getUserWatchlist(userDetails.getUsername());
 
         List<WatchlistAssetResponse> response = watchlist.stream()
-                .map(this::toAssetResponse)
+                .map(dtoMapper::toWatchlistAssetResponse)
                 .toList();
 
         return ResponseEntity.ok(response);
@@ -42,7 +45,7 @@ public class WatchlistController {
 
         Asset asset = entry.getAsset();
         WatchlistAssetResponse response = (asset != null)
-                ? toAssetResponse(asset)
+                ? dtoMapper.toWatchlistAssetResponse(asset)
                 : new WatchlistAssetResponse(null, assetSymbol, null);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -64,9 +67,5 @@ public class WatchlistController {
     ) {
         boolean isInWatchlist = watchlistService.isInWatchlist(assetSymbol, userDetails.getUsername());
         return ResponseEntity.ok(isInWatchlist);
-    }
-
-    private WatchlistAssetResponse toAssetResponse(Asset asset) {
-        return new WatchlistAssetResponse(asset.getId(), asset.getSymbol(), asset.getName());
     }
 }

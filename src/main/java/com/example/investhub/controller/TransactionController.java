@@ -1,5 +1,6 @@
 package com.example.investhub.controller;
 
+import com.example.investhub.mapper.DtoMapper;
 import com.example.investhub.model.Transaction;
 import com.example.investhub.model.dto.request.CreateTransactionRequest;
 import com.example.investhub.model.dto.response.TransactionResponse;
@@ -19,22 +20,11 @@ public class TransactionController {
 
     private static final Logger log = LoggerFactory.getLogger(TransactionController.class);
     private final TransactionService transactionService;
+    private final DtoMapper dtoMapper;
 
-    public TransactionController(TransactionService transactionService) {
+    public TransactionController(TransactionService transactionService, DtoMapper dtoMapper) {
         this.transactionService = transactionService;
-    }
-
-    private TransactionResponse toResponse(Transaction t) {
-        String assetSymbol = (t.getAsset() != null) ? t.getAsset().getSymbol() : null;
-
-        return new TransactionResponse(
-                t.getId(),
-                t.getType() != null ? t.getType().name() : null,
-                assetSymbol,
-                t.getQuantity(),
-                t.getPricePerUnit(),
-                t.getTimestamp()
-        );
+        this.dtoMapper = dtoMapper;
     }
 
     @GetMapping
@@ -42,7 +32,7 @@ public class TransactionController {
         List<TransactionResponse> transactions = transactionService
                 .getUserTransactions(userDetails.getUsername())
                 .stream()
-                .map(this::toResponse)
+                .map(dtoMapper::toTransactionResponse)
                 .toList();
 
         return ResponseEntity.ok(transactions);
@@ -52,7 +42,7 @@ public class TransactionController {
     public ResponseEntity<TransactionResponse> getTransactionById(@PathVariable Long transactionId,
                                                                   @AuthenticationPrincipal UserDetails userDetails) {
         Transaction transaction = transactionService.getTransactionById(transactionId, userDetails.getUsername());
-        return ResponseEntity.ok(toResponse(transaction));
+        return ResponseEntity.ok(dtoMapper.toTransactionResponse(transaction));
     }
 
     @PostMapping
@@ -76,7 +66,7 @@ public class TransactionController {
                 userDetails.getUsername()
         );
 
-        return ResponseEntity.ok(toResponse(created));
+        return ResponseEntity.ok(dtoMapper.toTransactionResponse(created));
     }
 
     @GetMapping("/asset/{symbol}")
@@ -85,7 +75,7 @@ public class TransactionController {
         List<TransactionResponse> transactions = transactionService
                 .getTransactionsByAsset(symbol, userDetails.getUsername())
                 .stream()
-                .map(this::toResponse)
+                .map(dtoMapper::toTransactionResponse)
                 .toList();
 
         return ResponseEntity.ok(transactions);

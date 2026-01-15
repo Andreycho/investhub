@@ -1,6 +1,5 @@
-package com.example.investhub.controller;
+package com.example.investhub.exception;
 
-import com.example.investhub.exception.*;
 import com.example.investhub.model.dto.response.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

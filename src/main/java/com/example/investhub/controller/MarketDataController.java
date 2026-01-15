@@ -1,5 +1,6 @@
 package com.example.investhub.controller;
 
+import com.example.investhub.mapper.DtoMapper;
 import com.example.investhub.model.Asset;
 import com.example.investhub.model.dto.response.AssetResponse;
 import com.example.investhub.model.dto.response.PriceResponse;
@@ -17,9 +18,11 @@ import java.util.List;
 public class MarketDataController {
 
     private final MarketDataService marketDataService;
+    private final DtoMapper dtoMapper;
 
-    public MarketDataController(MarketDataService marketDataService) {
+    public MarketDataController(MarketDataService marketDataService, DtoMapper dtoMapper) {
         this.marketDataService = marketDataService;
+        this.dtoMapper = dtoMapper;
     }
 
     /**
@@ -60,7 +63,7 @@ public class MarketDataController {
         List<Asset> assets = marketDataService.getAllAssets();
 
         List<AssetResponse> response = assets.stream()
-                .map(this::toAssetResponse)
+                .map(dtoMapper::toAssetResponse)
                 .toList();
 
         return ResponseEntity.ok(response);
@@ -75,7 +78,7 @@ public class MarketDataController {
     @GetMapping("/assets/{symbol}")
     public ResponseEntity<AssetResponse> getAssetBySymbol(@PathVariable String symbol) {
         Asset asset = marketDataService.getAssetBySymbol(symbol);
-        return ResponseEntity.ok(toAssetResponse(asset));
+        return ResponseEntity.ok(dtoMapper.toAssetResponse(asset));
     }
 
     /**
@@ -89,17 +92,9 @@ public class MarketDataController {
         List<Asset> assets = marketDataService.searchAssets(query);
 
         List<AssetResponse> response = assets.stream()
-                .map(this::toAssetResponse)
+                .map(dtoMapper::toAssetResponse)
                 .toList();
 
         return ResponseEntity.ok(response);
-    }
-
-    private AssetResponse toAssetResponse(Asset asset) {
-        AssetResponse dto = new AssetResponse();
-        dto.setId(asset.getId());
-        dto.setSymbol(asset.getSymbol());
-        dto.setName(asset.getName());
-        return dto;
     }
 }

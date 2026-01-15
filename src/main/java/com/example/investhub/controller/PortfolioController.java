@@ -1,5 +1,6 @@
 package com.example.investhub.controller;
 
+import com.example.investhub.mapper.DtoMapper;
 import com.example.investhub.model.Holding;
 import com.example.investhub.model.dto.response.BalanceResponse;
 import com.example.investhub.model.dto.response.HoldingResponse;
@@ -20,9 +21,11 @@ import java.util.Map;
 public class PortfolioController {
 
     private final PortfolioService portfolioService;
+    private final DtoMapper dtoMapper;
 
-    public PortfolioController(PortfolioService portfolioService) {
+    public PortfolioController(PortfolioService portfolioService, DtoMapper dtoMapper) {
         this.portfolioService = portfolioService;
+        this.dtoMapper = dtoMapper;
     }
 
     /**
@@ -37,7 +40,7 @@ public class PortfolioController {
         List<Holding> holdings = portfolioService.getUserHoldings(username);
 
         List<HoldingResponse> holdingDtos = holdings.stream()
-                .map(this::toHoldingResponse)
+                .map(dtoMapper::toHoldingResponse)
                 .toList();
 
         return ResponseEntity.ok(new PortfolioResponse(balance, holdingDtos));
@@ -60,7 +63,7 @@ public class PortfolioController {
         List<Holding> holdings = portfolioService.getUserHoldings(userDetails.getUsername());
 
         List<HoldingResponse> response = holdings.stream()
-                .map(this::toHoldingResponse)
+                .map(dtoMapper::toHoldingResponse)
                 .toList();
 
         return ResponseEntity.ok(response);
@@ -75,7 +78,7 @@ public class PortfolioController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         Holding holding = portfolioService.getHoldingBySymbol(symbol, userDetails.getUsername());
-        return ResponseEntity.ok(toHoldingResponse(holding));
+        return ResponseEntity.ok(dtoMapper.toHoldingResponse(holding));
     }
 
     /**
@@ -85,14 +88,5 @@ public class PortfolioController {
     public ResponseEntity<PortfolioStatsResponse> getPortfolioStats(@AuthenticationPrincipal UserDetails userDetails) {
         Map<String, Object> stats = portfolioService.getPortfolioStatistics(userDetails.getUsername());
         return ResponseEntity.ok(new PortfolioStatsResponse(stats));
-    }
-
-    private HoldingResponse toHoldingResponse(Holding holding) {
-        HoldingResponse dto = new HoldingResponse();
-        dto.setId(holding.getId());
-        dto.setAssetSymbol(holding.getAssetSymbol());
-        dto.setQuantity(holding.getQuantity());
-        dto.setAvgBuyPrice(holding.getAvgBuyPrice());
-        return dto;
     }
 }
