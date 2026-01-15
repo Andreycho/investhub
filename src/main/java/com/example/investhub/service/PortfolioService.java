@@ -1,12 +1,11 @@
 package com.example.investhub.service;
 
 import com.example.investhub.exception.InsufficientHoldingsException;
-import com.example.investhub.exception.ResourceNotFoundException;
 import com.example.investhub.model.Asset;
 import com.example.investhub.model.Holding;
 import com.example.investhub.model.Transaction;
 import com.example.investhub.model.User;
-import com.example.investhub.model.enums.PerformanceStatus;
+import com.example.investhub.model.enumeration.PerformanceStatus;
 import com.example.investhub.repository.HoldingRepository;
 import com.example.investhub.repository.UserRepository;
 import com.example.investhub.websocket.BinanceWebSocketService;
