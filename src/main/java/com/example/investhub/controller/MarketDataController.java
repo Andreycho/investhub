@@ -50,7 +50,7 @@ public class MarketDataController {
     @GetMapping("/prices/{symbol}")
     public ResponseEntity<PriceResponse> getPriceBySymbol(@PathVariable String symbol) {
         Double price = marketDataService.getPriceBySymbol(symbol);
-        return ResponseEntity.ok(new PriceResponse(symbol, price));
+        return ResponseEntity.ok(new PriceResponse(symbol.toUpperCase(), price));
     }
 
     /**
