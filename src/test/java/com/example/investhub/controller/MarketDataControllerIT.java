@@ -2,6 +2,10 @@ package com.example.investhub.controller;
 
 import com.example.investhub.model.Asset;
 import com.example.investhub.repository.AssetRepository;
+import com.example.investhub.repository.HoldingRepository;
+import com.example.investhub.repository.TransactionRepository;
+import com.example.investhub.repository.UserRepository;
+import com.example.investhub.repository.WatchlistRepository;
 import com.example.investhub.websocket.BinanceWebSocketService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,11 +31,21 @@ class MarketDataControllerIT {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private AssetRepository assetRepository;
+    @Autowired private HoldingRepository holdingRepository;
+    @Autowired private TransactionRepository transactionRepository;
+    @Autowired private UserRepository userRepository;
+    @Autowired private WatchlistRepository watchlistRepository;
 
     @MockBean private BinanceWebSocketService binanceWebSocketService;
 
     @BeforeEach
     void setUp() {
+        watchlistRepository.deleteAll();
+        transactionRepository.deleteAll();
+        holdingRepository.deleteAll();
+
+        userRepository.deleteAll();
+
         assetRepository.deleteAll();
 
         // Seed assets in H2

@@ -3,6 +3,8 @@ package com.example.investhub.controller;
 import com.example.investhub.model.Asset;
 import com.example.investhub.model.User;
 import com.example.investhub.repository.AssetRepository;
+import com.example.investhub.repository.HoldingRepository;
+import com.example.investhub.repository.TransactionRepository;
 import com.example.investhub.repository.UserRepository;
 import com.example.investhub.repository.WatchlistRepository;
 import com.example.investhub.service.JwtService;
@@ -37,16 +39,21 @@ class WatchlistControllerIT {
     @Autowired private UserRepository userRepository;
     @Autowired private AssetRepository assetRepository;
     @Autowired private WatchlistRepository watchlistRepository;
+    @Autowired private HoldingRepository holdingRepository;
+    @Autowired private TransactionRepository transactionRepository;
 
     private String token;
     private User user;
 
     @BeforeEach
     void setUp() {
-        // Clean DB
         watchlistRepository.deleteAll();
-        assetRepository.deleteAll();
+        transactionRepository.deleteAll();
+        holdingRepository.deleteAll();
+
         userRepository.deleteAll();
+
+        assetRepository.deleteAll();
 
         // Seed user
         user = new User();
