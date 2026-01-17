@@ -1,24 +1,24 @@
 package com.example.investhub.model.dto.request;
 
-import com.example.investhub.model.Transaction;
+import com.example.investhub.model.enumeration.TransactionType;
 
 /**
  * DTO for creating a transaction request.
  */
 public class CreateTransactionRequest {
 
-    private Transaction.Type type;
+    private TransactionType type;
     private String assetSymbol;
     private double quantity;
 
     public CreateTransactionRequest() {
     }
 
-    public Transaction.Type getType() {
+    public TransactionType getType() {
         return type;
     }
 
-    public void setType(Transaction.Type type) {
+    public void setType(TransactionType type) {
         this.type = type;
     }
 

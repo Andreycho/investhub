@@ -6,6 +6,7 @@ import com.example.investhub.model.Holding;
 import com.example.investhub.model.Transaction;
 import com.example.investhub.model.User;
 import com.example.investhub.model.enumeration.PerformanceStatus;
+import com.example.investhub.model.enumeration.TransactionType;
 import com.example.investhub.repository.HoldingRepository;
 import com.example.investhub.repository.UserRepository;
 import com.example.investhub.websocket.BinanceWebSocketService;
@@ -212,7 +213,7 @@ public class PortfolioService {
             holding.setAsset(asset);
         }
 
-        if (transaction.getType() == Transaction.Type.BUY) {
+        if (transaction.getType() == TransactionType.BUY) {
             double currentQty = holding.getQuantity();
             double currentAvg = holding.getAvgBuyPrice();
             double newQuantity = currentQty + transaction.getQuantity();
@@ -220,7 +221,7 @@ public class PortfolioService {
 
             holding.setQuantity(newQuantity);
             holding.setAvgBuyPrice(newQuantity > 0 ? totalCost / newQuantity : 0);
-        } else if (transaction.getType() == Transaction.Type.SELL) {
+        } else if (transaction.getType() == TransactionType.SELL) {
             holding.setQuantity(holding.getQuantity() - transaction.getQuantity());
         }
 

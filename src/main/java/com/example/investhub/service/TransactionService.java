@@ -6,6 +6,7 @@ import com.example.investhub.exception.ValidationException;
 import com.example.investhub.model.Asset;
 import com.example.investhub.model.Transaction;
 import com.example.investhub.model.User;
+import com.example.investhub.model.enumeration.TransactionType;
 import com.example.investhub.repository.AssetRepository;
 import com.example.investhub.repository.TransactionRepository;
 import com.example.investhub.repository.UserRepository;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -55,6 +57,50 @@ public class TransactionService {
     }
 
     /**
+     * Get transactions by type.
+     *
+     * @param username The username
+     * @param type The transaction type (BUY or SELL)
+     * @return List of transactions of the specified type
+     */
+    public List<Transaction> getUserTransactionsByType(String username, TransactionType type) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Use the @Query method from repository
+        return transactionRepository.findByUserIdAndType(user.getId(), type);
+    }
+
+    /**
+     * Calculate total amount spent/earned by transaction type.
+     *
+     * @param username The username
+     * @param type The transaction type
+     * @return Total amount for the specified type
+     */
+    public BigDecimal getTotalAmountByType(String username, TransactionType type) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        BigDecimal total = transactionRepository.calculateTotalAmountByUserAndType(user.getId(), type);
+        return total != null ? total : BigDecimal.ZERO;
+    }
+
+    /**
+     * Count transactions for a specific asset.
+     *
+     * @param username The username
+     * @param assetSymbol The asset symbol
+     * @return Number of transactions for the asset
+     */
+    public Long getTransactionCountByAsset(String username, String assetSymbol) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return transactionRepository.countTransactionsByUserAndAsset(user.getId(), assetSymbol);
+    }
+
+    /**
      * Get a specific transaction by ID.
      *
      * @param transactionId The transaction ID
@@ -84,7 +130,7 @@ public class TransactionService {
      * @param username The username
      * @return The created transaction
      */
-    public Transaction createTransaction(Transaction.Type type, String assetSymbol, double quantity, String username) {
+    public Transaction createTransaction(TransactionType type, String assetSymbol, double quantity, String username) {
         if (quantity <= 0) {
             throw new ValidationException("quantity", "Transaction quantity must be greater than 0");
         }
@@ -111,14 +157,14 @@ public class TransactionService {
 
         double transactionTotal = quantity * currentPrice;
 
-        if (type == Transaction.Type.BUY) {
+        if (type == TransactionType.BUY) {
             if (user.getUsdBalance().doubleValue() < transactionTotal) {
                 throw new InsufficientBalanceException(transactionTotal, user.getUsdBalance().doubleValue());
             }
 
             user.setUsdBalance(user.getUsdBalance().subtract(java.math.BigDecimal.valueOf(transactionTotal)));
 
-        } else if (type == Transaction.Type.SELL) {
+        } else if (type == TransactionType.SELL) {
             portfolioService.validateUserCanSell(user.getId(), asset.getSymbol(), quantity);
 
             user.setUsdBalance(user.getUsdBalance().add(java.math.BigDecimal.valueOf(transactionTotal)));

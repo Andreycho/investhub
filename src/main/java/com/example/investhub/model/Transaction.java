@@ -1,5 +1,6 @@
 package com.example.investhub.model;
 
+import com.example.investhub.model.enumeration.TransactionType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -8,8 +9,6 @@ import java.time.Instant;
 @Entity
 @Table(name = "transactions")
 public class Transaction {
-
-    public enum Type { BUY, SELL }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +26,7 @@ public class Transaction {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Type type;
+    private TransactionType type;
 
     @Column(nullable = false)
     private double quantity;
@@ -47,8 +46,8 @@ public class Transaction {
     public Asset getAsset() { return asset; }
     public void setAsset(Asset asset) { this.asset = asset; }
 
-    public Type getType() { return type; }
-    public void setType(Type type) { this.type = type; }
+    public TransactionType getType() { return type; }
+    public void setType(TransactionType type) { this.type = type; }
 
     public double getQuantity() { return quantity; }
     public void setQuantity(double quantity) { this.quantity = quantity; }
