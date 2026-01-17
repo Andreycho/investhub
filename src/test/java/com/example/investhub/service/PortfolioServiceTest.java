@@ -6,6 +6,7 @@ import com.example.investhub.model.Holding;
 import com.example.investhub.model.Transaction;
 import com.example.investhub.model.User;
 import com.example.investhub.model.enumeration.PerformanceStatus;
+import com.example.investhub.model.enumeration.TransactionType;
 import com.example.investhub.repository.HoldingRepository;
 import com.example.investhub.repository.UserRepository;
 import com.example.investhub.websocket.BinanceWebSocketService;
@@ -325,7 +326,7 @@ class PortfolioServiceTest {
         Transaction t = new Transaction();
         t.setUserId(user.getId());
         t.setAsset(asset);
-        t.setType(Transaction.Type.BUY);
+        t.setType(TransactionType.BUY);
         t.setQuantity(qty);
         t.setPricePerUnit(pricePerUnit);
         return t;
@@ -335,7 +336,7 @@ class PortfolioServiceTest {
         Transaction t = new Transaction();
         t.setUserId(user.getId());
         t.setAsset(asset);
-        t.setType(Transaction.Type.SELL);
+        t.setType(TransactionType.SELL);
         t.setQuantity(qty);
         t.setPricePerUnit(pricePerUnit);
         return t;

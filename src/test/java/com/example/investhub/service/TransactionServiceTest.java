@@ -6,6 +6,7 @@ import com.example.investhub.exception.ValidationException;
 import com.example.investhub.model.Asset;
 import com.example.investhub.model.Transaction;
 import com.example.investhub.model.User;
+import com.example.investhub.model.enumeration.TransactionType;
 import com.example.investhub.repository.AssetRepository;
 import com.example.investhub.repository.TransactionRepository;
 import com.example.investhub.repository.UserRepository;
@@ -35,9 +36,9 @@ class TransactionServiceTest {
 
     @Test
     void createTransaction_whenQuantityIsZero_shouldThrowValidationException() {
-        assertThrows(ValidationException.class, () ->
-                transactionService.createTransaction(Transaction.Type.BUY, "BTCUSDT", 0, "test1")
-        );
+        assertThrows(ValidationException.class, () -> {
+            transactionService.createTransaction(TransactionType.BUY, "   ", 1, "test1");
+        });
 
         verifyNoInteractions(userRepository, assetRepository, marketDataService, transactionRepository, portfolioService);
     }
@@ -45,7 +46,7 @@ class TransactionServiceTest {
     @Test
     void createTransaction_whenAssetSymbolMissing_shouldThrowValidationException() {
         assertThrows(ValidationException.class, () ->
-                transactionService.createTransaction(Transaction.Type.BUY, "   ", 1, "test1")
+                transactionService.createTransaction(TransactionType.BUY, "   ", 1, "test1")
         );
 
         verifyNoInteractions(userRepository, assetRepository, marketDataService, transactionRepository, portfolioService);
@@ -59,7 +60,7 @@ class TransactionServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () ->
-                transactionService.createTransaction(Transaction.Type.BUY, "BTCUSDT", 1, "missing")
+                transactionService.createTransaction(TransactionType.BUY, "BTCUSDT", 1, "missing")
         );
 
         verify(userRepository).findByUsername("missing");
@@ -81,7 +82,7 @@ class TransactionServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () ->
-                transactionService.createTransaction(Transaction.Type.BUY, "btcusdt", 1, "test1")
+                transactionService.createTransaction(TransactionType.BUY, "btcusdt", 1, "test1")
         );
 
         verify(userRepository).findByUsername("test1");
@@ -106,7 +107,7 @@ class TransactionServiceTest {
         when(marketDataService.getPriceBySymbol("BTCUSDT")).thenReturn(null);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () ->
-                transactionService.createTransaction(Transaction.Type.BUY, "btcusdt", 1, "test1")
+                transactionService.createTransaction(TransactionType.BUY, "btcusdt", 1, "test1")
         );
         assertTrue(ex.getMessage().contains("Unable to fetch current price"));
 
@@ -130,7 +131,7 @@ class TransactionServiceTest {
         when(marketDataService.getPriceBySymbol("BTCUSDT")).thenReturn(0.0);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () ->
-                transactionService.createTransaction(Transaction.Type.BUY, "BTCUSDT", 1, "test1")
+                transactionService.createTransaction(TransactionType.BUY, "BTCUSDT", 1, "test1")
         );
         assertTrue(ex.getMessage().contains("Unable to fetch current price"));
 
@@ -156,7 +157,7 @@ class TransactionServiceTest {
         when(marketDataService.getPriceBySymbol("BTCUSDT")).thenReturn(1000.0); // 1 * 1000 > 100
 
         assertThrows(InsufficientBalanceException.class, () ->
-                transactionService.createTransaction(Transaction.Type.BUY, "BTCUSDT", 1, "test1")
+                transactionService.createTransaction(TransactionType.BUY, "BTCUSDT", 1, "test1")
         );
 
         verify(userRepository, never()).save(any());
@@ -184,7 +185,7 @@ class TransactionServiceTest {
         // mock save to return same transaction (simulate DB save)
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Transaction result = transactionService.createTransaction(Transaction.Type.BUY, "btcusdt", 2, "test1");
+        Transaction result = transactionService.createTransaction(TransactionType.BUY, "btcusdt", 2, "test1");
 
         // balance = 30000 - 2000 = 28000
         assertEquals(new BigDecimal("28000.00"), user.getUsdBalance());
@@ -195,7 +196,7 @@ class TransactionServiceTest {
         verify(transactionRepository).save(txCaptor.capture());
 
         Transaction savedTx = txCaptor.getValue();
-        assertEquals(Transaction.Type.BUY, savedTx.getType());
+        assertEquals(TransactionType.BUY, savedTx.getType());
         assertEquals(2.0, savedTx.getQuantity());
         assertEquals(1000.0, savedTx.getPricePerUnit());
         assertNotNull(savedTx.getAsset());
@@ -206,7 +207,7 @@ class TransactionServiceTest {
 
         assertNotNull(result);
         assertEquals(1L, result.getUserId());
-        assertEquals(Transaction.Type.BUY, result.getType());
+        assertEquals(TransactionType.BUY, result.getType());
     }
 
     // ---------- SELL tests ----------
@@ -229,7 +230,7 @@ class TransactionServiceTest {
 
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Transaction result = transactionService.createTransaction(Transaction.Type.SELL, "BTCUSDT", 1.5, "test1");
+        Transaction result = transactionService.createTransaction(TransactionType.SELL, "BTCUSDT", 1.5, "test1");
 
         // validate sell called
         verify(portfolioService).validateUserCanSell(1L, "BTCUSDT", 1.5);
@@ -242,7 +243,7 @@ class TransactionServiceTest {
         verify(portfolioService).updateHoldingAfterTransaction(any(Transaction.class), eq(user));
 
         assertNotNull(result);
-        assertEquals(Transaction.Type.SELL, result.getType());
+        assertEquals(TransactionType.SELL, result.getType());
         assertEquals(1.5, result.getQuantity());
         assertEquals(1000.0, result.getPricePerUnit());
         assertEquals(1L, result.getUserId());

@@ -4,6 +4,7 @@ import com.example.investhub.model.Asset;
 import com.example.investhub.model.Holding;
 import com.example.investhub.model.Transaction;
 import com.example.investhub.model.User;
+import com.example.investhub.model.enumeration.TransactionType;
 import com.example.investhub.repository.AssetRepository;
 import com.example.investhub.repository.HoldingRepository;
 import com.example.investhub.repository.TransactionRepository;
@@ -25,7 +26,6 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -47,6 +47,7 @@ class TransactionControllerIT {
     @Autowired private HoldingRepository holdingRepository;
     @Autowired private TransactionRepository transactionRepository;
 
+    @SuppressWarnings("deprecation")
     @MockBean private BinanceWebSocketService binanceWebSocketService;
 
     private String token;
@@ -204,7 +205,7 @@ class TransactionControllerIT {
 
         Transaction t1 = new Transaction();
         t1.setUserId(user.getId());
-        t1.setType(Transaction.Type.BUY);
+        t1.setType(TransactionType.BUY);
         t1.setAsset(btc);
         t1.setQuantity(1.0);
         t1.setPricePerUnit(10000.0);
@@ -212,7 +213,7 @@ class TransactionControllerIT {
 
         Transaction t2 = new Transaction();
         t2.setUserId(user.getId());
-        t2.setType(Transaction.Type.BUY);
+        t2.setType(TransactionType.BUY);
         t2.setAsset(eth);
         t2.setQuantity(2.0);
         t2.setPricePerUnit(2000.0);
@@ -230,7 +231,7 @@ class TransactionControllerIT {
     void getTransactionById_shouldReturnTransaction_whenOwnedByUser() throws Exception {
         Transaction t = new Transaction();
         t.setUserId(user.getId());
-        t.setType(Transaction.Type.BUY);
+        t.setType(TransactionType.BUY);
         t.setAsset(btc);
         t.setQuantity(1.0);
         t.setPricePerUnit(10000.0);
@@ -248,7 +249,106 @@ class TransactionControllerIT {
     void endpoints_withoutToken_shouldBeRejected() throws Exception {
         mockMvc.perform(get("/api/transactions").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(anyOf(is(401), is(403))));
+    }
 
+    @Test
+    void getTransactionsByType_shouldReturnOnlyBuyTransactions() throws Exception {
+        // Seed BUY and SELL transactions
+        Transaction buyTx = new Transaction();
+        buyTx.setUserId(user.getId());
+        buyTx.setType(TransactionType.BUY);
+        buyTx.setAsset(btc);
+        buyTx.setQuantity(1.0);
+        buyTx.setPricePerUnit(10000.0);
+        transactionRepository.save(buyTx);
+
+        Transaction sellTx = new Transaction();
+        sellTx.setUserId(user.getId());
+        sellTx.setType(TransactionType.SELL);
+        sellTx.setAsset(btc);
+        sellTx.setQuantity(0.5);
+        sellTx.setPricePerUnit(11000.0);
+        transactionRepository.save(sellTx);
+
+        // Get only BUY transactions
+        mockMvc.perform(get("/api/transactions?type=BUY")
+                        .header("Authorization", bearer())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].type", is("BUY")))
+                .andExpect(jsonPath("$[0].quantity", is(1.0)));
+
+        // Get only SELL transactions
+        mockMvc.perform(get("/api/transactions?type=SELL")
+                        .header("Authorization", bearer())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].type", is("SELL")))
+                .andExpect(jsonPath("$[0].quantity", is(0.5)));
+    }
+
+    @Test
+    void getTotalAmountByType_shouldReturnCorrectTotals() throws Exception {
+        // Seed multiple BUY transactions
+        Transaction buy1 = new Transaction();
+        buy1.setUserId(user.getId());
+        buy1.setType(TransactionType.BUY);
+        buy1.setAsset(btc);
+        buy1.setQuantity(1.0);
+        buy1.setPricePerUnit(10000.0);
+        transactionRepository.save(buy1);
+
+        Transaction buy2 = new Transaction();
+        buy2.setUserId(user.getId());
+        buy2.setType(TransactionType.BUY);
+        buy2.setAsset(btc);
+        buy2.setQuantity(0.5);
+        buy2.setPricePerUnit(12000.0);
+        transactionRepository.save(buy2);
+
+        // Get total BUY amount: (1.0 * 10000) + (0.5 * 12000) = 16000
+        mockMvc.perform(get("/api/transactions/total?type=BUY")
+                        .header("Authorization", bearer())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type", is("BUY")))
+                .andExpect(jsonPath("$.totalAmount", is(16000.0)));
+    }
+
+    @Test
+    void getTransactionCountByAsset_shouldReturnCorrectCount() throws Exception {
+        // Seed multiple transactions for BTC
+        for (int i = 0; i < 3; i++) {
+            Transaction tx = new Transaction();
+            tx.setUserId(user.getId());
+            tx.setType(TransactionType.BUY);
+            tx.setAsset(btc);
+            tx.setQuantity(0.1);
+            tx.setPricePerUnit(10000.0);
+            transactionRepository.save(tx);
+        }
+
+        // Get count for BTC
+        mockMvc.perform(get("/api/transactions/count/BTCUSDT")
+                        .header("Authorization", bearer())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.assetSymbol", is("BTCUSDT")))
+                .andExpect(jsonPath("$.transactionCount", is(3)));
+
+        // Get count for non-existent asset
+        mockMvc.perform(get("/api/transactions/count/ETHUSDT")
+                        .header("Authorization", bearer())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.assetSymbol", is("ETHUSDT")))
+                .andExpect(jsonPath("$.transactionCount", is(0)));
+    }
+
+    @Test
+    void createTransaction_withoutToken_shouldBeRejected() throws Exception {
         mockMvc.perform(post("/api/transactions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

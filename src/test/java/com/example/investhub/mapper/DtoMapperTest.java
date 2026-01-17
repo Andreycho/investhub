@@ -4,6 +4,7 @@ import com.example.investhub.model.Asset;
 import com.example.investhub.model.Holding;
 import com.example.investhub.model.Transaction;
 import com.example.investhub.model.dto.response.*;
+import com.example.investhub.model.enumeration.TransactionType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -105,7 +106,7 @@ class DtoMapperTest {
 
         Transaction tx = new Transaction();
         tx.setId(10L);
-        tx.setType(Transaction.Type.BUY);
+        tx.setType(TransactionType.BUY);
         tx.setAsset(asset);
         tx.setQuantity(0.1);
         tx.setPricePerUnit(60000.0);
@@ -127,7 +128,7 @@ class DtoMapperTest {
     void toTransactionResponse_shouldHandleNullAsset() {
         Transaction tx = new Transaction();
         tx.setId(11L);
-        tx.setType(Transaction.Type.SELL);
+        tx.setType(TransactionType.SELL);
         tx.setAsset(null);
         tx.setQuantity(0.2);
         tx.setPricePerUnit(65000.0);

@@ -5,6 +5,7 @@ import com.example.investhub.model.Holding;
 import com.example.investhub.model.Transaction;
 import com.example.investhub.model.User;
 import com.example.investhub.model.WatchlistEntry;
+import com.example.investhub.model.enumeration.TransactionType;
 import com.example.investhub.repository.AssetRepository;
 import com.example.investhub.repository.HoldingRepository;
 import com.example.investhub.repository.TransactionRepository;
@@ -83,7 +84,7 @@ class AccountControllerIT {
         Transaction t = new Transaction();
         t.setUserId(user.getId());
         t.setAsset(btc);
-        t.setType(Transaction.Type.BUY);
+        t.setType(TransactionType.BUY);
         t.setQuantity(2.0);
         t.setPricePerUnit(100.0);
         t.setTimestamp(Instant.now());
